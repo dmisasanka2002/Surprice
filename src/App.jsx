@@ -116,12 +116,12 @@ const UltraRomanticExperience = () => {
       poem: "Little whispers and midnight talks,\nHolding hands during our evening walks.\nThese perfect moments with you each day,\nGive my life meaning in every way.",
     },
     {
-      image: "/Surprice/image2.jpg",
+      image: "/Surprice/image4.jpg",
       title: "Dreams Together",
       poem: "Dreams once lone now intertwined,\nA future together, lovingly designed.\nWith you by my side, I've come to see,\nThe beautiful life that's meant to be.",
     },
     {
-      image: "/Surprice/image.jpg",
+      image: "/Surprice/kiss.gif",
       title: "Forever Yours",
       poem: "My heart is yours, now and always,\nFor all our nights and all our days.\nIn your love I've found my home,\nWith you, I'll never be alone.",
     },
