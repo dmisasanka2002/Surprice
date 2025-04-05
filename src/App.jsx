@@ -1,4 +1,82 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Component for the animated last message
+const AnimatedLastMessage = ({ message }) => {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [showFullMessage, setShowFullMessage] = useState(false);
+  const words = message.split(' ');
+  
+  // Colors for the words - feel free to adjust these
+  const wordColors = [
+    "text-blue-500", "text-purple-500", "text-pink-500", 
+    "text-rose-500", "text-amber-500", "text-emerald-500"
+  ];
+  
+  useEffect(() => {
+    let wordTimer;
+    
+    if (currentWordIndex < words.length) {
+      // Show each word for 2.5 seconds (including animation time)
+      wordTimer = setTimeout(() => {
+        setCurrentWordIndex(prevIndex => prevIndex + 1);
+      }, 2500);
+    } else if (currentWordIndex === words.length && !showFullMessage) {
+      // When all words have been shown individually, show the full message
+      wordTimer = setTimeout(() => {
+        setShowFullMessage(true);
+      }, 1000);
+    }
+    
+    return () => {
+      if (wordTimer) clearTimeout(wordTimer);
+    };
+  }, [currentWordIndex, words.length, showFullMessage]);
+  
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[200px]">
+      {/* Individual word animations */}
+      {!showFullMessage && (
+        <AnimatePresence mode="wait">
+          {currentWordIndex < words.length && (
+            <motion.div
+              key={currentWordIndex}
+              className={`text-6xl md:text-7xl font-bold ${wordColors[currentWordIndex % wordColors.length]}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ 
+                opacity: [0, 1, 1, 0], 
+                scale: [0.8, 1.1, 1, 0.9],
+                y: [20, 0, 0, -20]
+              }}
+              transition={{ 
+                duration: 2.3,
+                times: [0, 0.2, 0.8, 1],
+                ease: "easeInOut"
+              }}
+            >
+              {words[currentWordIndex]}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+      
+      {/* Full message animation */}
+      {showFullMessage && (
+        <motion.div 
+          className="text-3xl md:text-4xl lg:text-5xl font-bold text-center px-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+        >
+          {message}
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+
+
 
 const UltraRomanticExperience = () => {
   // State management
@@ -10,6 +88,7 @@ const UltraRomanticExperience = () => {
   const [mouseEntered, setMouseEntered] = useState(false);
   const [revealedHearts, setRevealedHearts] = useState([]);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
+  const [finalMessageIndex, setFinalMessageIndex] = useState(0);
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const heartParticlesRef = useRef([]);
@@ -48,8 +127,10 @@ const UltraRomanticExperience = () => {
     },
   ];
 
-  const finalMessage =
-    "You are the poetry in my soul, the rhythm in my heart, and the meaning in my life. Every day with you is a gift I cherish more than words can express. I love you beyond the boundaries of time and space, beyond the depths of the oceans, and beyond the infinite stars in the sky. You are my everything.";
+  const finalMessages = [
+    "You are the poetry in my soul, the rhythm in my heart, and the meaning in my life. Every day with you is a gift I cherish more than words can express. I love you beyond the boundaries of time and space, beyond the depths of the oceans, and beyond the infinite stars in the sky. You are my everything.",
+    "I Love You ",
+  ];
 
   // Setup canvas and animation loop
   useEffect(() => {
@@ -137,6 +218,7 @@ const UltraRomanticExperience = () => {
   // Mouse tracking for interactive elements
   useEffect(() => {
     if (stage === 2) {
+      audio.play();
       const handleMouseMove = (e) => {
         if (containerRef.current) {
           const rect = containerRef.current.getBoundingClientRect();
@@ -180,7 +262,7 @@ const UltraRomanticExperience = () => {
   // Text typing effect
   useEffect(() => {
     if (stage === 2) {
-      audio.play();
+      // audio.play();
       const currentText = scenes[activeScene].poem;
       let index = 0;
 
@@ -209,15 +291,40 @@ const UltraRomanticExperience = () => {
   useEffect(() => {
     if (revealedHearts.length === scenes.length) {
       setTimeout(() => {
-        setShowFinalMessage(true);
+        {
+          setShowFinalMessage(true);
+          // setStage(3);
+        }
       }, 1000);
     }
   }, [revealedHearts]);
 
+  useEffect(() => {
+    // This effect handles cycling through the final messages
+    let messageTimer;
+
+    if (showFinalMessage && finalMessageIndex < finalMessages.length - 1) {
+      messageTimer = setTimeout(() => {
+        setFinalMessageIndex((prevIndex) => prevIndex + 1);
+      }, 5000);
+    }
+
+    // Clean up the timer if component unmounts or dependencies change
+    return () => {
+      if (messageTimer) clearTimeout(messageTimer);
+    };
+  }, [showFinalMessage, finalMessageIndex, finalMessages.length]);
+
+  // Navigate between scenes
+  const goToFinalMessage = (index) => {
+    if (index >= 0 && index < finalMessages.length) {
+      setFinalMessageIndex(index);
+    }
+  };
+
   // Start the experience
   const startJourney = () => {
     setStage(1);
-    // audio.play();
   };
 
   // Navigate between scenes
@@ -262,6 +369,46 @@ const UltraRomanticExperience = () => {
         className="absolute inset-0 w-full h-full"
         style={{ display: stage >= 2 ? "block" : "none", zIndex: 0 }}
       />
+
+      {/* Background gradients */}
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/30 via-purple-900/30 to-pink-900/30 z-0"></div>
+
+      {/* Animated particles background */}
+      <div className="absolute inset-0 overflow-hidden z-0">
+        {Array.from({ length: 50 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/10 backdrop-blur-sm"
+            initial={{
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+              scale: Math.random() * 0.5 + 0.5,
+            }}
+            animate={{
+              x: [
+                Math.random() * window.innerWidth,
+                Math.random() * window.innerWidth,
+                Math.random() * window.innerWidth,
+              ],
+              y: [
+                Math.random() * window.innerHeight,
+                Math.random() * window.innerHeight,
+                Math.random() * window.innerHeight,
+              ],
+            }}
+            transition={{
+              duration: Math.random() * 20 + 20,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            style={{
+              width: `${Math.random() * 20 + 5}px`,
+              height: `${Math.random() * 20 + 5}px`,
+              opacity: Math.random() * 0.5 + 0.2,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Intro Stage */}
       {stage === 0 && (
@@ -411,7 +558,7 @@ const UltraRomanticExperience = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
                         <div className="absolute bottom-0 left-0 w-full p-4">
-                          <h2 className="text-2xl font-bold text-white mb-2">
+                          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-600 mb-2 animate-shimmer">
                             {scenes[activeScene].title}
                           </h2>
                         </div>
@@ -496,9 +643,22 @@ const UltraRomanticExperience = () => {
                         My Heart Is Yours
                       </h2>
 
-                      <p className="text-white text-lg leading-relaxed text-center mb-8">
-                        {finalMessage}
-                      </p>
+                      {/* <p className="text-white text-lg leading-relaxed text-center mb-8">
+                        {showFinalMessage && finalMessages[finalMessageIndex]}
+                      </p> */}
+
+                      {showFinalMessage &&
+                        (finalMessageIndex === finalMessages.length - 1 ? (
+                          <div className="w-full flex justify-center items-center py-8">
+                            <AnimatedLastMessage
+                              message={finalMessages[finalMessageIndex]}
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-white leading-relaxed text-lg md:text-2xl text-center px-4">
+                            {finalMessages[finalMessageIndex]}
+                          </div>
+                        ))}
 
                       <div className="flex justify-center mt-10">
                         <div className="text-center animate-float">
@@ -541,10 +701,14 @@ const UltraRomanticExperience = () => {
             opacity: 0;
           }
         }
-        
+
         @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+          0% {
+            background-position: -200% center;
+          }
+          100% {
+            background-position: 200% center;
+          }
         }
 
         @keyframes floatUpAndFade {
